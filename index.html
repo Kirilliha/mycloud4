@@ -26,27 +26,28 @@
     <div id="feed" style="width: 100%; max-width: 500px;"></div>
 
     <script type="module">
+        // Загружаем библиотеки через CDN согласно требованиям лекции
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
         import { 
             getFirestore, collection, addDoc, query, orderBy, onSnapshot, 
             serverTimestamp, updateDoc, doc, increment, deleteDoc
         } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
-        // ВНИМАНИЕ: Замените этот объект на ВАШИ данные из консоли Firebase
+        // Ваша индивидуальная конфигурация Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCNzmsRZ-lv37gMX6H7ttLvYkCBZ8taYM8",
             authDomain: "mycloud-9a4ca.firebaseapp.com",
             projectId: "mycloud-9a4ca",
             storageBucket: "mycloud-9a4ca.firebasestorage.app",
             messagingSenderId: "118303927329",
-            appId: "1:118303927329:web:b4f4a47af11dcd0b4d0760"
+            appId: "1:118303927329:web:b4f4a47af11dcd0b4d0760",
             measurementId: "G-NT9QS41QQ8"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
-        // Экспортируем функции в window для тестирования на взлом (Этап III)
+        // Экспортируем функции в window для проведения теста на взлом
         window.db = db;
         window.deleteDoc = deleteDoc;
         window.doc = doc;
@@ -75,7 +76,7 @@
                 document.getElementById('name').value = "";
                 document.getElementById('email').value = "";
             } catch (e) {
-                alert("Ошибка безопасности: Данные отклонены сервером.");
+                alert("Ошибка безопасности: Данные отклонены сервером. Проверьте правильность email и длину имени.");
             }
             btn.disabled = false;
         };
