@@ -2,69 +2,101 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Мой облачный проект</title>
+    <title>BaaS Firebase</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; padding: 50px; background-color: #f4f4f9; }
-        .form-container { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 300px; }
-        input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background: #f4b400; border: none; color: white; font-weight: bold; cursor: pointer; border-radius: 5px; }
-        button:hover { background: #dfa400; }
+        body { font-family: 'Inter', sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { width: 100%; max-width: 500px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button#mainBtn { background: #007bff; color: white; border: none; padding: 12px; border-radius: 6px; width: 100%; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .post { background: #fff; border: 1px solid #eaeaae; padding: 15px; margin-top: 15px; border-radius: 8px; width: 100%; max-width: 500px; position: relative; }
+        .like-btn { cursor: pointer; border: none; background: #f0f0f0; padding: 5px 12px; border-radius: 20px; font-size: 14px; transition: 0.2s; }
+        .like-btn:hover { background: #e2e2e2; }
+        .time { font-size: 11px; color: #999; float: right; }
     </style>
 </head>
 <body>
 
-<div class="form-container">
-    <h3>Отправить заявку</h3>
-    <form id="feedbackForm">
-        <input type="text" id="userName" placeholder="Ваше имя" required>
-        <input type="email" id="userEmail" placeholder="Ваш Email" required>
-        <button type="submit">Отправить в облако</button>
-    </form>
-</div>
+    <div class="container">
+        <h3>Панель управления данными</h3>
+        <input type="text" id="name" placeholder="Имя профиля">
+        <input type="email" id="email" placeholder="Рабочий Email">
+        <button id="mainBtn">Опубликовать в облако</button>
+    </div>
 
-<script type="module">
-    // Импортируем модули Firebase (добавлен импорт Analytics)
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-analytics.js";
+    <div id="feed" style="width: 100%; max-width: 500px;"></div>
 
-    // ВАШ НОВЫЙ КОНФИГ
-    const firebaseConfig = {
-        apiKey: "AIzaSyCNzmsRZ-lv37gMX6H7ttLvYkCBZ8taYM8",
-        authDomain: "mycloud-9a4ca.firebaseapp.com",
-        projectId: "mycloud-9a4ca",
-        storageBucket: "mycloud-9a4ca.firebasestorage.app",
-        messagingSenderId: "118303927329",
-        appId: "1:118303927329:web:b4f4a47af11dcd0b4d0760",
-        measurementId: "G-NT9QS41QQ8"
-    };
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { 
+            getFirestore, collection, addDoc, query, orderBy, onSnapshot, 
+            serverTimestamp, updateDoc, doc, increment, deleteDoc
+        } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
-    // Инициализация
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app); // Инициализация аналитики
-    const db = getFirestore(app); // Инициализация базы данных
+        // ВНИМАНИЕ: Замените этот объект на ВАШИ данные из консоли Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCNzmsRZ-lv37gMX6H7ttLvYkCBZ8taYM8",
+            authDomain: "mycloud-9a4ca.firebaseapp.com",
+            projectId: "mycloud-9a4ca",
+            storageBucket: "mycloud-9a4ca.firebasestorage.app",
+            messagingSenderId: "118303927329",
+            appId: "1:118303927329:web:b4f4a47af11dcd0b4d0760"
+            measurementId: "G-NT9QS41QQ8"
+        };
 
-    // Логика кнопки
-    document.getElementById("feedbackForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Экспортируем функции в window для тестирования на взлом (Этап III)
+        window.db = db;
+        window.deleteDoc = deleteDoc;
+        window.doc = doc;
 
-        const nameInput = document.getElementById("userName").value;
-        const emailInput = document.getElementById("userEmail").value;
+        // МЕТОД: АТОМАРНОЕ ОБНОВЛЕНИЕ (LIKES)
+        window.processLike = async (id) => {
+            const docRef = doc(db, "requests", id);
+            try {
+                await updateDoc(docRef, { likes: increment(1) });
+            } catch (e) {
+                console.error("Validation Error:", e.message);
+            }
+        };
 
-        try {
-            // Запись в коллекцию "requests"
-            await addDoc(collection(db, "requests"), {
-                name: nameInput,
-                email: emailInput,
-                timestamp: new Date()
+        // МЕТОД: ЗАПИСЬ С ВАЛИДАЦИЕЙ
+        document.getElementById('mainBtn').onclick = async () => {
+            const btn = document.getElementById('mainBtn');
+            btn.disabled = true;
+            try {
+                await addDoc(collection(db, "requests"), {
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    likes: 0,
+                    timestamp: serverTimestamp()
+                });
+                document.getElementById('name').value = "";
+                document.getElementById('email').value = "";
+            } catch (e) {
+                alert("Ошибка безопасности: Данные отклонены сервером.");
+            }
+            btn.disabled = false;
+        };
+
+        // МЕТОД: REAL-TIME СИНХРОНИЗАЦИЯ
+        const q = query(collection(db, "requests"), orderBy("timestamp", "desc"));
+        onSnapshot(q, (snapshot) => {
+            const feed = document.getElementById('feed');
+            feed.innerHTML = "";
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                feed.innerHTML += `
+                    <div class="post">
+                        <span class="time">${data.timestamp?.toDate().toLocaleTimeString() || '...'}</span>
+                        <b>${data.name}</b>
+                        <p style="margin: 5px 0;">${data.email}</p>
+                        <button class="like-btn" onclick="processLike('${doc.id}')">👍 ${data.likes || 0}</button>
+                    </div>
+                `;
             });
-            alert("Готово! Данные сохранены в Firebase.");
-            document.getElementById("feedbackForm").reset();
-        } catch (error) {
-            console.error("Ошибка записи: ", error);
-            alert("Ошибка при отправке.");
-        }
-    });
-</script>
+        });
+    </script>
 </body>
 </html>
