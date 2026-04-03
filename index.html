@@ -5,30 +5,204 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Облачное приложение</title>
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .container { width: 100%; max-width: 500px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        
-        /* Стили блока авторизации */
-        .auth-bar { background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #007bff; }
-        
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button { background: #007bff; color: white; border: none; padding: 12px; border-radius: 6px; width: 100%; font-weight: 600; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #0056b3; }
-        button:disabled { background: #ccc; }
-        .logout-btn { background: #ff4757; padding: 8px 15px; width: auto; font-size: 14px; }
-        
-        .post { background: #fff; border: 1px solid #eaeaea; padding: 15px; margin-top: 15px; border-radius: 8px; width: 100%; max-width: 500px; }
-        .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .post-avatar { width: 30px; height: 30px; border-radius: 50%; }
-        .like-btn { cursor: pointer; border: none; background: #f0f0f0; padding: 5px 12px; border-radius: 20px; margin-top: 10px; }
-        .time { font-size: 11px; color: #999; margin-left: auto; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f4f7f6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .auth-bar {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #007bff;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            width: 100%;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        button:disabled {
+            background: #ccc;
+        }
+
+        .logout-btn {
+            background: #ff4757;
+            padding: 8px 15px;
+            width: auto;
+            font-size: 14px;
+        }
+
+        .post {
+            background: #fff;
+            border: 1px solid #eaeaea;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .post-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+        }
+
+        .like-btn {
+            cursor: pointer;
+            border: none;
+            background: #f0f0f0;
+            padding: 5px 12px;
+            border-radius: 20px;
+            margin-top: 10px;
+            color: #000;
+            width: auto;
+        }
+
+        .time {
+            font-size: 11px;
+            color: #999;
+            margin-left: auto;
+        }
+
+        .section-title {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .chat-box {
+            height: 320px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fafafa;
+            margin-bottom: 10px;
+        }
+
+        .chat-message {
+            margin: 8px 0;
+            display: flex;
+        }
+
+        .chat-message.me {
+            justify-content: flex-end;
+        }
+
+        .chat-message.other {
+            justify-content: flex-start;
+        }
+
+        .chat-bubble {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .chat-message.me .chat-bubble {
+            background: #007bff;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-message.other .chat-bubble {
+            background: #e9ecef;
+            color: #222;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-meta {
+            font-size: 11px;
+            margin-top: 4px;
+            opacity: 0.7;
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chat-input-row input {
+            margin: 0;
+            flex: 1;
+        }
+
+        .chat-input-row button {
+            width: 120px;
+            flex-shrink: 0;
+        }
+
+        .small-note {
+            font-size: 12px;
+            color: #777;
+            margin-top: -2px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
 
     <div id="authSection" class="container" style="max-width: 500px; text-align: center;">
         <button id="loginBtn">Войти через Google</button>
+
         <div id="userInfo" style="display: none;" class="auth-bar">
             <img id="userPhoto" class="user-avatar" src="" alt="Avatar">
             <span id="userName" style="font-weight: bold;"></span>
@@ -37,29 +211,69 @@
     </div>
 
     <div id="messageForm" class="container" style="display: none;">
-        <h3>Создать запись</h3>
+        <h3 class="section-title">Создать запись</h3>
         <input type="text" id="name" placeholder="Имя профиля" readonly>
         <input type="email" id="email" placeholder="Ваш Email" readonly>
         <input type="text" id="content" placeholder="Что у вас нового?">
         <button id="mainBtn">Опубликовать в облаке</button>
     </div>
 
+    <div id="privateChatSection" class="container" style="display: none;">
+        <h3 class="section-title">Личные сообщения</h3>
+
+        <label for="userSelect">Выберите собеседника:</label>
+        <select id="userSelect">
+            <option value="">-- Выберите пользователя --</option>
+        </select>
+
+        <div class="small-note">
+            Чтобы человек появился в списке, он должен хотя бы один раз войти на сайт.
+        </div>
+
+        <h4 id="chatTitle">Чат не выбран</h4>
+
+        <div id="chatBox" class="chat-box"></div>
+
+        <div class="chat-input-row">
+            <input type="text" id="privateMessageInput" placeholder="Ваше сообщение...">
+            <button id="sendPrivateBtn">Отправить</button>
+        </div>
+    </div>
+
     <div id="feed" style="width: 100%; max-width: 500px;"></div>
 
     <script type="module">
-        // Импорт функций Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc, doc, increment } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            query,
+            orderBy,
+            onSnapshot,
+            serverTimestamp,
+            updateDoc,
+            doc,
+            increment,
+            setDoc,
+            getDoc,
+            getDocs
+        } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+        import {
+            getAuth,
+            signInWithPopup,
+            GoogleAuthProvider,
+            signOut,
+            onAuthStateChanged
+        } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 
-        // Конфигурация (замените на свои данные из консоли Firebase)
-const firebaseConfig = {
+        const firebaseConfig = {
             apiKey: "AIzaSyCNzmsRZ-lv37gMX6H7ttLvYkCBZ8taYM8",
             authDomain: "mycloud-9a4ca.firebaseapp.com",
             projectId: "mycloud-9a4ca",
             storageBucket: "mycloud-9a4ca.firebasestorage.app",
             messagingSenderId: "118303927329",
-            appId: "1:118303927329:web:b4f4a47af11dcd0b4d0760", // <--- ДОБАВЛЕНА ЗАПЯТАЯ
+            appId: "1:118303927329:web:b4f4a47af11dcd0b4d0760",
             measurementId: "G-NT9QS41QQ8"
         };
 
@@ -68,44 +282,225 @@ const firebaseConfig = {
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // DOM элементы
-        const loginBtn = document.getElementById('loginBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const userInfo = document.getElementById('userInfo');
-        const messageForm = document.getElementById('messageForm');
+        const loginBtn = document.getElementById("loginBtn");
+        const logoutBtn = document.getElementById("logoutBtn");
+        const userInfo = document.getElementById("userInfo");
+        const messageForm = document.getElementById("messageForm");
 
-        // Логика авторизации
+        const privateChatSection = document.getElementById("privateChatSection");
+        const userSelect = document.getElementById("userSelect");
+        const chatTitle = document.getElementById("chatTitle");
+        const chatBox = document.getElementById("chatBox");
+        const privateMessageInput = document.getElementById("privateMessageInput");
+        const sendPrivateBtn = document.getElementById("sendPrivateBtn");
+
+        let currentChatId = null;
+        let unsubscribePrivateMessages = null;
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function getChatId(uid1, uid2) {
+            return [uid1, uid2].sort().join("_");
+        }
+
+        async function saveUserToFirestore(user) {
+            const userRef = doc(db, "users", user.uid);
+            await setDoc(userRef, {
+                uid: user.uid,
+                name: user.displayName || "Без имени",
+                email: user.email || "",
+                photo: user.photoURL || "",
+                createdAt: serverTimestamp()
+            }, { merge: true });
+        }
+
+        async function loadUsers() {
+            const usersRef = collection(db, "users");
+            const snapshot = await getDocs(usersRef);
+
+            userSelect.innerHTML = '<option value="">-- Выберите пользователя --</option>';
+
+            snapshot.forEach((userDoc) => {
+                const userData = userDoc.data();
+
+                if (auth.currentUser && userData.uid !== auth.currentUser.uid) {
+                    const option = document.createElement("option");
+                    option.value = userData.uid;
+                    option.textContent = userData.name || userData.email || "Пользователь";
+                    option.dataset.name = userData.name || "Пользователь";
+                    userSelect.appendChild(option);
+                }
+            });
+        }
+
+        async function openOrCreateChat(selectedUid, selectedName) {
+            currentChatId = getChatId(auth.currentUser.uid, selectedUid);
+
+            const chatRef = doc(db, "private_chats", currentChatId);
+            const chatSnap = await getDoc(chatRef);
+
+            if (!chatSnap.exists()) {
+                await setDoc(chatRef, {
+                    members: [auth.currentUser.uid, selectedUid],
+                    memberNames: {
+                        [auth.currentUser.uid]: auth.currentUser.displayName || "Без имени",
+                        [selectedUid]: selectedName || "Пользователь"
+                    },
+                    lastMessage: "",
+                    updatedAt: serverTimestamp()
+                });
+            }
+
+            listenPrivateMessages(currentChatId);
+        }
+
+        function listenPrivateMessages(chatId) {
+            if (unsubscribePrivateMessages) {
+                unsubscribePrivateMessages();
+                unsubscribePrivateMessages = null;
+            }
+
+            const messagesRef = collection(db, "private_chats", chatId, "messages");
+            const q = query(messagesRef, orderBy("createdAt", "asc"));
+
+            unsubscribePrivateMessages = onSnapshot(q, (snapshot) => {
+                chatBox.innerHTML = "";
+
+                snapshot.forEach((msgDoc) => {
+                    const msg = msgDoc.data();
+                    const isMe = auth.currentUser && msg.senderId === auth.currentUser.uid;
+                    const safeText = escapeHtml(msg.text || "");
+                    const timeText = msg.createdAt
+                        ? msg.createdAt.toDate().toLocaleTimeString()
+                        : "...";
+
+                    chatBox.innerHTML += `
+                        <div class="chat-message ${isMe ? "me" : "other"}">
+                            <div class="chat-bubble">
+                                <div>${safeText}</div>
+                                <div class="chat-meta">${timeText}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+        }
+
         loginBtn.onclick = () => signInWithPopup(auth, provider);
         logoutBtn.onclick = () => signOut(auth);
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Пользователь вошел
-                loginBtn.style.display = 'none';
-                userInfo.style.display = 'flex';
-                messageForm.style.display = 'block';
-                
-                document.getElementById('userName').innerText = user.displayName;
-                document.getElementById('userPhoto').src = user.photoURL;
-                document.getElementById('name').value = user.displayName;
-                document.getElementById('email').value = user.email;
+                loginBtn.style.display = "none";
+                userInfo.style.display = "flex";
+                messageForm.style.display = "block";
+                privateChatSection.style.display = "block";
+
+                document.getElementById("userName").innerText = user.displayName || "Без имени";
+                document.getElementById("userPhoto").src = user.photoURL || "";
+                document.getElementById("name").value = user.displayName || "";
+                document.getElementById("email").value = user.email || "";
+
+                await saveUserToFirestore(user);
+                await loadUsers();
             } else {
-                // Пользователь не авторизован
-                loginBtn.style.display = 'block';
-                userInfo.style.display = 'none';
-                messageForm.style.display = 'none';
+                loginBtn.style.display = "block";
+                userInfo.style.display = "none";
+                messageForm.style.display = "none";
+                privateChatSection.style.display = "none";
+
+                userSelect.innerHTML = '<option value="">-- Выберите пользователя --</option>';
+                chatBox.innerHTML = "";
+                chatTitle.innerText = "Чат не выбран";
+                currentChatId = null;
+
+                if (unsubscribePrivateMessages) {
+                    unsubscribePrivateMessages();
+                    unsubscribePrivateMessages = null;
+                }
             }
         });
 
-        // Логика лайков
+        userSelect.addEventListener("change", async () => {
+            const selectedUid = userSelect.value;
+            const selectedName = userSelect.options[userSelect.selectedIndex]?.dataset?.name || "Пользователь";
+
+            if (!selectedUid || !auth.currentUser) {
+                currentChatId = null;
+                chatTitle.innerText = "Чат не выбран";
+                chatBox.innerHTML = "";
+                return;
+            }
+
+            chatTitle.innerText = `Чат с: ${selectedName}`;
+            await openOrCreateChat(selectedUid, selectedName);
+        });
+
+        sendPrivateBtn.addEventListener("click", async () => {
+            const text = privateMessageInput.value.trim();
+
+            if (!auth.currentUser) {
+                alert("Сначала войдите в аккаунт");
+                return;
+            }
+
+            if (!currentChatId) {
+                alert("Сначала выберите собеседника");
+                return;
+            }
+
+            if (!text) {
+                alert("Введите сообщение");
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "private_chats", currentChatId, "messages"), {
+                    senderId: auth.currentUser.uid,
+                    senderName: auth.currentUser.displayName || "Без имени",
+                    text: text,
+                    createdAt: serverTimestamp()
+                });
+
+                await updateDoc(doc(db, "private_chats", currentChatId), {
+                    lastMessage: text,
+                    updatedAt: serverTimestamp()
+                });
+
+                privateMessageInput.value = "";
+            } catch (e) {
+                console.error(e);
+                alert("Ошибка при отправке сообщения. Проверь Firestore Rules.");
+            }
+        });
+
+        privateMessageInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                sendPrivateBtn.click();
+            }
+        });
+
         window.processLike = async (id) => {
             await updateDoc(doc(db, "requests", id), { likes: increment(1) });
         };
 
-        // Отправка данных
-        document.getElementById('mainBtn').onclick = async () => {
-            const content = document.getElementById('content').value;
-            if (!content) return alert("Введите текст сообщения!");
+        document.getElementById("mainBtn").onclick = async () => {
+            const content = document.getElementById("content").value.trim();
+
+            if (!content) {
+                alert("Введите текст сообщения!");
+                return;
+            }
 
             try {
                 await addDoc(collection(db, "requests"), {
@@ -116,34 +511,43 @@ const firebaseConfig = {
                     likes: 0,
                     timestamp: serverTimestamp()
                 });
-                document.getElementById('content').value = "";
+
+                document.getElementById("content").value = "";
             } catch (e) {
-                alert("Ошибка безопасности! Проверьте правила (Rules) в Firebase.");
+                console.error(e);
+                alert("Ошибка безопасности! Проверьте Rules в Firebase.");
             }
         };
 
-        // Real-time обновление ленты
-        const q = query(collection(db, "requests"), orderBy("timestamp", "desc"));
-        onSnapshot(q, (snapshot) => {
-            const feed = document.getElementById('feed');
+        const postsQuery = query(collection(db, "requests"), orderBy("timestamp", "desc"));
+        onSnapshot(postsQuery, (snapshot) => {
+            const feed = document.getElementById("feed");
             feed.innerHTML = "";
-            snapshot.forEach((doc) => {
-                const data = doc.data();
+
+            snapshot.forEach((postDoc) => {
+                const data = postDoc.data();
+                const safeName = escapeHtml(data.name || "Пользователь");
+                const safeText = escapeHtml(data.text || data.email || "");
+                const photo = data.photo || "https://via.placeholder.com/30";
+                const timeText = data.timestamp
+                    ? data.timestamp.toDate().toLocaleTimeString()
+                    : "...";
+
                 feed.innerHTML += `
                     <div class="post">
                         <div class="post-header">
-                            <img src="${data.photo || 'https://via.placeholder.com/30'}" class="post-avatar">
-                            <b>${data.name}</b>
-                            <span class="time">${data.timestamp ? data.timestamp.toDate().toLocaleTimeString() : '...'}</span>
+                            <img src="${photo}" class="post-avatar" alt="avatar">
+                            <b>${safeName}</b>
+                            <span class="time">${timeText}</span>
                         </div>
-                        <p>${data.text || data.email}</p>
-                        <button class="like-btn" onclick="processLike('${doc.id}')">👍 ${data.likes || 0}</button>
+                        <p>${safeText}</p>
+                        <button class="like-btn" onclick="processLike('${postDoc.id}')">👍 ${data.likes || 0}</button>
                     </div>
                 `;
             });
         });
 
-        window.db = db; // Для тестов в консоли F12
+        window.db = db;
     </script>
 </body>
 </html>
