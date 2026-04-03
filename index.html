@@ -478,10 +478,10 @@
                 });
 
                 privateMessageInput.value = "";
-            } catch (e) {
-                console.error(e);
-                alert("Ошибка при отправке сообщения. Проверь Firestore Rules.");
-            }
+catch (e) {
+    console.error("Полная ошибка Firebase:", e);
+    alert("Ошибка: " + e.message);
+}
         });
 
         privateMessageInput.addEventListener("keypress", (e) => {
