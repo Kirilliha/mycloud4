@@ -267,6 +267,7 @@
             onAuthStateChanged
         } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 
+        // ИСПРАВЛЕНИЕ: добавлена запятая после appId
         const firebaseConfig = {
             apiKey: "AIzaSyCNzmsRZ-lv37gMX6H7ttLvYkCBZ8taYM8",
             authDomain: "mycloud-9a4ca.firebaseapp.com",
@@ -478,10 +479,10 @@
                 });
 
                 privateMessageInput.value = "";
-catch (e) {
-    console.error("Полная ошибка Firebase:", e);
-    alert("Ошибка: " + e.message);
-}
+            } catch (e) { // ИСПРАВЛЕНИЕ: закрыта скобка } перед catch
+                console.error("Полная ошибка Firebase:", e);
+                alert("Ошибка: " + e.message);
+            }
         });
 
         privateMessageInput.addEventListener("keypress", (e) => {
