@@ -1,9 +1,9 @@
 :root {
-    --primary-color: #3390ec; /* Синий цвет Telegram */
-    --bg-main: #e4eaf0; /* Фон за чатом */
+    --primary-color: #3390ec;
+    --bg-main: #e4eaf0;
     --bg-sidebar: #ffffff;
     --msg-in: #ffffff;
-    --msg-out: #e3ffc8; /* Светло-зеленый (WhatsApp/Telegram) */
+    --msg-out: #e3ffc8;
     --text-dark: #000000;
     --text-muted: #707579;
     --border-color: #dfe1e5;
@@ -29,17 +29,24 @@ body {
 }
 .auth-card {
     background: white; padding: 40px; border-radius: 12px;
-    text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 350px;
 }
 .auth-card h2 { margin-bottom: 10px; }
-.auth-card p { margin-bottom: 25px; color: var(--text-muted); }
+.auth-card p { margin-bottom: 25px; color: var(--text-muted); font-size: 14px; }
 
 .btn-primary {
-    background: var(--primary-color); color: white;
-    border: none; padding: 12px 24px; border-radius: 8px;
-    font-size: 16px; font-weight: 500; cursor: pointer; transition: 0.2s;
+    background: var(--primary-color); color: white; border: none;
+    padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 500;
+    cursor: pointer; transition: 0.2s;
 }
 .btn-primary:hover { background: #2b7cd8; }
+
+.btn-secondary {
+    background: #e4eaf0; color: #333; border: none;
+    padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 500;
+    cursor: pointer; transition: 0.2s;
+}
+.btn-secondary:hover { background: #d0d7de; }
 
 /* --- Основной интерфейс --- */
 .app-container {
@@ -54,7 +61,7 @@ body {
 }
 .sidebar-header {
     padding: 15px; display: flex; align-items: center; gap: 10px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color); background: #f8f9fa;
 }
 .avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; }
 .my-info { flex: 1; }
@@ -81,11 +88,12 @@ body {
 .chat-header {
     padding: 15px 20px; background: var(--bg-sidebar);
     border-bottom: 1px solid var(--border-color); min-height: 73px;
-    display: flex; align-items: center;
+    display: flex; align-items: center; justify-content: space-between;
 }
 .active-chat-info { display: flex; align-items: center; gap: 15px; }
 .active-chat-name { font-weight: 500; font-size: 16px; display: block; }
 .online-status { font-size: 13px; color: var(--primary-color); }
+.no-chat-selected { color: var(--text-muted); font-size: 14px; margin: auto; }
 
 .messages-area {
     flex: 1; padding: 20px; overflow-y: auto;
@@ -100,6 +108,7 @@ body {
 .msg-bubble {
     max-width: 65%; padding: 10px 14px; border-radius: 12px;
     font-size: 15px; line-height: 1.4; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    word-wrap: break-word;
 }
 .msg-wrapper.in .msg-bubble { background: var(--msg-in); border-bottom-left-radius: 4px; }
 .msg-wrapper.out .msg-bubble { background: var(--msg-out); border-bottom-right-radius: 4px; }
