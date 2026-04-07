@@ -32,13 +32,17 @@
 
         <main class="chat-area">
             <header class="chat-header">
-                <div id="activeChatInfo" class="active-chat-info" style="display: none;">
-                    <img id="activeChatAvatar" src="" alt="Аватар" class="avatar">
-                    <div class="active-chat-details">
-                        <span id="activeChatName" class="active-chat-name">Имя</span>
-                        <span class="online-status">В сети</span>
+                <div id="activeChatInfo" class="active-chat-info" style="display: none; width: 100%; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <img id="activeChatAvatar" src="" alt="Аватар" class="avatar">
+                        <div class="active-chat-details">
+                            <span id="activeChatName" class="active-chat-name">Имя</span>
+                            <span class="online-status">В сети</span>
+                        </div>
                     </div>
+                    <button id="deleteChatBtn" class="btn-icon" title="Очистить историю" style="color: #ff4d4d; font-size: 20px;">🗑️</button>
                 </div>
+                
                 <div id="noChatSelected" class="no-chat-selected">
                     Выберите контакт слева для начала общения
                 </div>
