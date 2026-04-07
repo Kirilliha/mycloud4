@@ -9,24 +9,17 @@
 </head>
 <body>
 
-    <div id="authScreen" class="auth-screen">
-        <div class="auth-card">
-            <h2>Cloud Messenger</h2>
-            <p>Войдите, чтобы начать общение</p>
-            <button id="loginBtn" class="btn-primary" style="width: 100%; margin-bottom: 10px;">Войти через Google</button>
-            <button id="guestBtn" class="btn-secondary" style="width: 100%;">Войти как Гость</button>
-        </div>
-    </div>
-
-    <div id="appScreen" class="app-container" style="display: none;">
+    <div id="appScreen" class="app-container">
         
         <aside class="sidebar">
             <div class="sidebar-header">
-                <img id="myAvatar" src="" alt="Мой аватар" class="avatar">
+                <img id="myAvatar" src="https://via.placeholder.com/42" alt="Мой аватар" class="avatar">
                 <div class="my-info">
-                    <span id="myName" class="my-name">Загрузка...</span>
+                    <span id="myName" class="my-name">Подключение...</span>
                 </div>
-                <button id="logoutBtn" class="btn-icon" title="Выйти">🚪</button>
+                
+                <button id="googleLoginBtn" class="btn-icon" title="Привязать Google" style="display: none; color: #db4437; font-size: 20px;">G</button>
+                <button id="logoutBtn" class="btn-icon" title="Выйти" style="display: none;">🚪</button>
             </div>
             
             <div class="search-bar">
@@ -42,7 +35,7 @@
                 <div id="activeChatInfo" class="active-chat-info" style="display: none;">
                     <img id="activeChatAvatar" src="" alt="Аватар" class="avatar">
                     <div class="active-chat-details">
-                        <span id="activeChatName" class="active-chat-name">Имя собеседника</span>
+                        <span id="activeChatName" class="active-chat-name">Имя</span>
                         <span class="online-status">В сети</span>
                     </div>
                 </div>
