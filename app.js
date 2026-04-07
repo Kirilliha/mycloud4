@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
 import { 
     getFirestore, collection, addDoc, query, orderBy, onSnapshot, 
-    serverTimestamp, doc, setDoc, updateDoc, deleteDoc 
+    serverTimestamp, doc, setDoc, updateDoc, deleteDoc, getDocs 
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 import { 
     getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInAnonymously 
@@ -36,12 +36,13 @@ const messageInputArea = document.getElementById('messageInputArea');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
 const attachBtn = document.getElementById('attachBtn');
 const imageInput = document.getElementById('imageInput');
+const deleteChatBtn = document.getElementById('deleteChatBtn'); // <-- НОВАЯ КНОПКА
 
 let currentChatUid = null;
 let unsubscribeChat = null;
 
 // ==============================
-// 1. ТЕМНАЯ ТЕМА (Сохраняется в браузере)
+// 1. ТЕМНАЯ ТЕМА
 // ==============================
 if (localStorage.getItem('theme') === 'dark') {
     document.body.classList.add('dark-theme');
@@ -121,7 +122,7 @@ function renderContact(user) {
 }
 
 // ==============================
-// 4. ЛОГИКА ЧАТА (Отрисовка, Изменение, Удаление)
+// 4. ЛОГИКА ЧАТА (Отрисовка)
 // ==============================
 function getChatId(uid1, uid2) { return [uid1, uid2].sort().join("_"); }
 
@@ -156,7 +157,6 @@ function openChat(user) {
             
             let contentHtml = "";
             if (msg.imageUrl) {
-                // Картинка хранится прямо в тексте (Base64)
                 contentHtml = `<img src="${msg.imageUrl}" class="msg-image" onclick="window.open(this.src, '_blank')">`;
             } else {
                 const safeText = msg.text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -192,7 +192,7 @@ function openChat(user) {
 }
 
 // ==============================
-// 5. ОТПРАВКА, РЕДАКТИРОВАНИЕ, УДАЛЕНИЕ СООБЩЕНИЙ
+// 5. ОТПРАВКА, РЕДАКТИРОВАНИЕ, УДАЛЕНИЕ
 // ==============================
 async function sendMessage() {
     const text = messageInput.value.trim();
@@ -230,7 +230,7 @@ window.editMsg = async (msgId, oldText) => {
 };
 
 // ==============================
-// 6. ОТПРАВКА ИЗОБРАЖЕНИЙ (БЕЗ FIREBASE STORAGE - ЧЕРЕЗ BASE64)
+// 6. ОТПРАВКА ИЗОБРАЖЕНИЙ (BASE64)
 // ==============================
 attachBtn.onclick = () => imageInput.click();
 
@@ -241,19 +241,16 @@ imageInput.onchange = (e) => {
     messageInput.placeholder = "Сжатие и отправка...";
     messageInput.disabled = true;
 
-    // Читаем файл
     const reader = new FileReader();
     reader.onload = (event) => {
         const img = new Image();
         img.onload = async () => {
-            // Создаем холст (canvas) для сжатия картинки
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 800; // Максимальная ширина
-            const MAX_HEIGHT = 800; // Максимальная высота
+            const MAX_WIDTH = 800; 
+            const MAX_HEIGHT = 800; 
             let width = img.width;
             let height = img.height;
 
-            // Высчитываем новые размеры с сохранением пропорций
             if (width > height) {
                 if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
             } else {
@@ -262,14 +259,10 @@ imageInput.onchange = (e) => {
             canvas.width = width;
             canvas.height = height;
             
-            // Рисуем сжатую картинку на холсте
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
-
-            // Превращаем картинку в строку текста (JPEG, качество 70%)
             const base64String = canvas.toDataURL('image/jpeg', 0.7);
 
-            // Сохраняем эту строку в обычную базу Firestore
             const chatId = getChatId(auth.currentUser.uid, currentChatUid);
             try {
                 await addDoc(collection(db, "chats", chatId, "messages"), {
@@ -283,10 +276,42 @@ imageInput.onchange = (e) => {
             } finally {
                 messageInput.placeholder = "Написать сообщение...";
                 messageInput.disabled = false;
-                imageInput.value = ''; // Очищаем инпут
+                imageInput.value = ''; 
             }
         };
         img.src = event.target.result;
     };
     reader.readAsDataURL(file);
+};
+
+// ==============================
+// 7. ПОЛНОЕ УДАЛЕНИЕ ЧАТА
+// ==============================
+deleteChatBtn.onclick = async () => {
+    if (!currentChatUid) return;
+    
+    const isConfirmed = confirm("Вы уверены, что хотите очистить всю историю переписки? Сообщения удалятся навсегда у обоих собеседников!");
+    if (!isConfirmed) return;
+
+    const chatId = getChatId(auth.currentUser.uid, currentChatUid);
+    const messagesRef = collection(db, "chats", chatId, "messages");
+
+    try {
+        // Сначала получаем список всех сообщений в этом чате
+        const snapshot = await getDocs(messagesRef);
+        
+        // Создаем массив задач на удаление каждого сообщения
+        const deletePromises = snapshot.docs.map(docSnap => 
+            deleteDoc(doc(db, "chats", chatId, "messages", docSnap.id))
+        );
+        
+        // Запускаем их одновременное удаление
+        await Promise.all(deletePromises);
+        
+        // Очищаем окно визуально
+        messagesArea.innerHTML = '<div class="empty-chat-placeholder">Чат успешно очищен. Напишите первое сообщение...</div>';
+    } catch (error) {
+        console.error("Ошибка при удалении чата:", error);
+        alert("Произошла ошибка при удалении чата. Проверьте консоль.");
+    }
 };
