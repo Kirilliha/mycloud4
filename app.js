@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
 import { 
     getFirestore, collection, addDoc, query, orderBy, onSnapshot, 
-    serverTimestamp, doc, setDoc 
+    serverTimestamp, doc, setDoc, updateDoc, deleteDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 import { 
     getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInAnonymously 
@@ -33,30 +33,39 @@ const messagesArea = document.getElementById('messagesArea');
 const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 const messageInputArea = document.getElementById('messageInputArea');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+const attachBtn = document.getElementById('attachBtn');
+const imageInput = document.getElementById('imageInput');
 
 let currentChatUid = null;
 let unsubscribeChat = null;
 
 // ==============================
-// 1. АВТОМАТИЧЕСКАЯ АВТОРИЗАЦИЯ
+// 1. ТЕМНАЯ ТЕМА (Сохраняется в браузере)
 // ==============================
+if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-theme');
+    themeToggleBtn.innerText = '☀️';
+}
+themeToggleBtn.onclick = () => {
+    document.body.classList.toggle('dark-theme');
+    const isDark = document.body.classList.contains('dark-theme');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    themeToggleBtn.innerText = isDark ? '☀️' : '🌙';
+};
 
-// Кнопка привязки Google (теперь используем Popup)
+// ==============================
+// 2. АВТОРИЗАЦИЯ
+// ==============================
 googleLoginBtn.onclick = async () => {
-    try {
-        await signInWithPopup(auth, provider);
-    } catch (error) {
-        console.error("Ошибка входа Google:", error);
-        alert("Ошибка входа. Если открыли файл напрямую, попробуйте запустить через Live Server.");
-    }
+    try { await signInWithPopup(auth, provider); } 
+    catch (error) { console.error("Ошибка входа Google:", error); }
 };
 
 logoutBtn.onclick = () => signOut(auth);
 
-// Отслеживание состояния
 onAuthStateChanged(auth, async (user) => {
     if (user) {
-        // Если юзер вошел (гостем или через гугл)
         const isGuest = user.isAnonymous;
         const displayName = isGuest ? `Гость_${user.uid.substring(0, 4)}` : user.displayName;
         const photoURL = user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`;
@@ -64,36 +73,21 @@ onAuthStateChanged(auth, async (user) => {
         document.getElementById('myAvatar').src = photoURL;
         document.getElementById('myName').innerText = displayName;
 
-        // Показываем нужные кнопки
         if (isGuest) {
-            googleLoginBtn.style.display = 'block'; // Гостям предлагаем Google
+            googleLoginBtn.style.display = 'block';
             logoutBtn.style.display = 'none';
         } else {
             googleLoginBtn.style.display = 'none';
-            logoutBtn.style.display = 'block'; // Полноценным юзерам даем кнопку выхода
+            logoutBtn.style.display = 'block';
         }
 
-        // Сохраняем в базу
         await setDoc(doc(db, "users", user.uid), {
-            uid: user.uid,
-            name: displayName,
-            photo: photoURL,
-            email: user.email || "Гость",
-            isAnonymous: isGuest
+            uid: user.uid, name: displayName, photo: photoURL, email: user.email || "Гость", isAnonymous: isGuest
         }, { merge: true });
 
         loadContacts();
     } else {
-        // ЕСЛИ ЮЗЕРА НЕТ - АВТОМАТИЧЕСКИ ДЕЛАЕМ ЕГО ГОСТЕМ
-        try {
-            await signInAnonymously(auth);
-        } catch (error) {
-            console.error("Ошибка гостевого входа:", error);
-            if(error.code === 'auth/operation-not-allowed') {
-                alert("КРИТИЧЕСКАЯ ОШИБКА: Зайдите в Firebase -> Authentication -> Sign-in method и включите Anonymous (Анонимно)!");
-            }
-        }
-        
+        try { await signInAnonymously(auth); } catch (error) { console.error("Ошибка:", error); }
         contactsList.innerHTML = '';
         currentChatUid = null;
         if(unsubscribeChat) unsubscribeChat();
@@ -101,7 +95,7 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 // ==============================
-// 2. ЗАГРУЗКА КОНТАКТОВ
+// 3. КОНТАКТЫ
 // ==============================
 function loadContacts() {
     const q = query(collection(db, "users"));
@@ -109,9 +103,7 @@ function loadContacts() {
         contactsList.innerHTML = '';
         snapshot.forEach((doc) => {
             const userData = doc.data();
-            if (auth.currentUser && userData.uid !== auth.currentUser.uid) {
-                renderContact(userData);
-            }
+            if (auth.currentUser && userData.uid !== auth.currentUser.uid) renderContact(userData);
         });
     });
 }
@@ -119,11 +111,7 @@ function loadContacts() {
 function renderContact(user) {
     const div = document.createElement('div');
     div.className = 'contact-item';
-    div.innerHTML = `
-        <img src="${user.photo}" class="avatar">
-        <div class="contact-name">${user.name} ${user.isAnonymous ? '(Гость)' : ''}</div>
-    `;
-    
+    div.innerHTML = `<img src="${user.photo}" class="avatar"><div class="contact-name">${user.name}</div>`;
     div.onclick = () => {
         document.querySelectorAll('.contact-item').forEach(el => el.classList.remove('active'));
         div.classList.add('active');
@@ -133,15 +121,12 @@ function renderContact(user) {
 }
 
 // ==============================
-// 3. ЛОГИКА ЧАТА
+// 4. ЛОГИКА ЧАТА (Отрисовка, Изменение, Удаление)
 // ==============================
-function getChatId(uid1, uid2) {
-    return [uid1, uid2].sort().join("_");
-}
+function getChatId(uid1, uid2) { return [uid1, uid2].sort().join("_"); }
 
 function openChat(user) {
     currentChatUid = user.uid;
-    
     document.getElementById('noChatSelected').style.display = 'none';
     document.getElementById('activeChatInfo').style.display = 'flex';
     document.getElementById('activeChatAvatar').src = user.photo;
@@ -151,45 +136,63 @@ function openChat(user) {
     messageInputArea.style.pointerEvents = 'all';
 
     const chatId = getChatId(auth.currentUser.uid, currentChatUid);
-
     if (unsubscribeChat) unsubscribeChat();
 
     const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"));
     
     unsubscribeChat = onSnapshot(q, (snapshot) => {
         messagesArea.innerHTML = '';
-        
         if (snapshot.empty) {
             messagesArea.innerHTML = '<div class="empty-chat-placeholder">Напишите первое сообщение...</div>';
             return;
         }
 
-        snapshot.forEach((doc) => {
-            const msg = doc.data();
+        snapshot.forEach((docSnap) => {
+            const msg = docSnap.data();
+            const msgId = docSnap.id; 
             const isMe = msg.senderId === auth.currentUser.uid;
             
-            const timeText = msg.timestamp 
-                ? msg.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) 
-                : '...';
+            const timeText = msg.timestamp ? msg.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...';
+            
+            let contentHtml = "";
+            if (msg.imageUrl) {
+                // Картинка хранится прямо в тексте (Base64)
+                contentHtml = `<img src="${msg.imageUrl}" class="msg-image" onclick="window.open(this.src, '_blank')">`;
+            } else {
+                const safeText = msg.text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                contentHtml = `<span>${safeText}</span>`;
+            }
 
-            const safeText = msg.text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            let actionsHtml = "";
+            if (isMe) {
+                const editBtn = !msg.imageUrl ? `<button class="action-btn" onclick="window.editMsg('${msgId}', \`${msg.text.replace(/`/g, '\\`')}\`)">✏️</button>` : '';
+                actionsHtml = `
+                    <div class="msg-actions">
+                        ${editBtn}
+                        <button class="action-btn" onclick="window.deleteMsg('${msgId}')">🗑️</button>
+                    </div>
+                `;
+            }
 
             messagesArea.innerHTML += `
                 <div class="msg-wrapper ${isMe ? 'out' : 'in'}">
                     <div class="msg-bubble">
-                        ${safeText}
-                        <span class="msg-time">${timeText}</span>
+                        ${contentHtml}
+                        <div class="msg-footer">
+                            ${actionsHtml}
+                            ${msg.edited ? '<span class="msg-edited">(изменено)</span>' : ''}
+                            <span class="msg-time">${timeText}</span>
+                        </div>
                     </div>
                 </div>
             `;
         });
-        
         messagesArea.scrollTop = messagesArea.scrollHeight;
     });
 }
 
 // ==============================
-// 4. ОТПРАВКА СООБЩЕНИЯ
+// 5. ОТПРАВКА, РЕДАКТИРОВАНИЕ, УДАЛЕНИЕ СООБЩЕНИЙ
 // ==============================
 async function sendMessage() {
     const text = messageInput.value.trim();
@@ -198,19 +201,92 @@ async function sendMessage() {
     messageInput.value = '';
     const chatId = getChatId(auth.currentUser.uid, currentChatUid);
 
-    try {
-        await addDoc(collection(db, "chats", chatId, "messages"), {
-            senderId: auth.currentUser.uid,
-            text: text,
-            timestamp: serverTimestamp()
-        });
-    } catch (e) {
-        alert("Ошибка отправки! Проверьте правила базы данных.");
-        console.error(e);
-    }
+    await addDoc(collection(db, "chats", chatId, "messages"), {
+        senderId: auth.currentUser.uid,
+        text: text,
+        timestamp: serverTimestamp()
+    });
 }
 
 sendBtn.onclick = sendMessage;
-messageInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") sendMessage();
-});
+messageInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
+
+window.deleteMsg = async (msgId) => {
+    if(confirm("Удалить сообщение?")) {
+        const chatId = getChatId(auth.currentUser.uid, currentChatUid);
+        await deleteDoc(doc(db, "chats", chatId, "messages", msgId));
+    }
+};
+
+window.editMsg = async (msgId, oldText) => {
+    const newText = prompt("Редактировать сообщение:", oldText);
+    if (newText !== null && newText.trim() !== "" && newText !== oldText) {
+        const chatId = getChatId(auth.currentUser.uid, currentChatUid);
+        await updateDoc(doc(db, "chats", chatId, "messages", msgId), {
+            text: newText.trim(),
+            edited: true
+        });
+    }
+};
+
+// ==============================
+// 6. ОТПРАВКА ИЗОБРАЖЕНИЙ (БЕЗ FIREBASE STORAGE - ЧЕРЕЗ BASE64)
+// ==============================
+attachBtn.onclick = () => imageInput.click();
+
+imageInput.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file || !currentChatUid) return;
+
+    messageInput.placeholder = "Сжатие и отправка...";
+    messageInput.disabled = true;
+
+    // Читаем файл
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const img = new Image();
+        img.onload = async () => {
+            // Создаем холст (canvas) для сжатия картинки
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800; // Максимальная ширина
+            const MAX_HEIGHT = 800; // Максимальная высота
+            let width = img.width;
+            let height = img.height;
+
+            // Высчитываем новые размеры с сохранением пропорций
+            if (width > height) {
+                if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+            } else {
+                if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Рисуем сжатую картинку на холсте
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Превращаем картинку в строку текста (JPEG, качество 70%)
+            const base64String = canvas.toDataURL('image/jpeg', 0.7);
+
+            // Сохраняем эту строку в обычную базу Firestore
+            const chatId = getChatId(auth.currentUser.uid, currentChatUid);
+            try {
+                await addDoc(collection(db, "chats", chatId, "messages"), {
+                    senderId: auth.currentUser.uid,
+                    imageUrl: base64String, 
+                    timestamp: serverTimestamp()
+                });
+            } catch (error) {
+                console.error("Ошибка:", error);
+                alert("Ошибка отправки! Возможно, картинка слишком большая.");
+            } finally {
+                messageInput.placeholder = "Написать сообщение...";
+                messageInput.disabled = false;
+                imageInput.value = ''; // Очищаем инпут
+            }
+        };
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+};
