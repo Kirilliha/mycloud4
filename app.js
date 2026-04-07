@@ -11,13 +11,13 @@ import {
 // 🔴 ВСТАВЬ СВОЙ КОНФИГ ИЗ FIREBASE СЮДА:
 // ==========================================
 const firebaseConfig = {
-    apiKey: "ТВОЙ_API_KEY",
-    authDomain: "ТВОЙ_ПРОЕКТ.firebaseapp.com",
-    projectId: "ТВОЙ_ПРОЕКТ",
-    storageBucket: "ТВОЙ_ПРОЕКТ.firebasestorage.app",
-    messagingSenderId: "ТВОЙ_ID",
-    appId: "ТВОЙ_APP_ID",
-    measurementId: "ТВОЙ_MEASUREMENT"
+  apiKey: "AIzaSyCNzmsRZ-lv37gMX6H7ttLvYkCBZ8taYM8",
+  authDomain: "mycloud-9a4ca.firebaseapp.com",
+  projectId: "mycloud-9a4ca",
+  storageBucket: "mycloud-9a4ca.firebasestorage.app",
+  messagingSenderId: "118303927329",
+  appId: "1:118303927329:web:b4f4a47af11dcd0b4d0760",
+  measurementId: "G-NT9QS41QQ8"
 };
 
 const app = initializeApp(firebaseConfig);
