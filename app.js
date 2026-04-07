@@ -8,16 +8,16 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 
 // ==========================================
-// 🔴 ВСТАВЬ СВОЙ КОНФИГ ИЗ FIREBASE СЮДА:
+// ТВОЙ НАСТОЯЩИЙ КОНФИГ ИЗ FIREBASE:
 // ==========================================
 const firebaseConfig = {
-  apiKey: "AIzaSyCNzmsRZ-lv37gMX6H7ttLvYkCBZ8taYM8",
-  authDomain: "mycloud-9a4ca.firebaseapp.com",
-  projectId: "mycloud-9a4ca",
-  storageBucket: "mycloud-9a4ca.firebasestorage.app",
-  messagingSenderId: "118303927329",
-  appId: "1:118303927329:web:b4f4a47af11dcd0b4d0760",
-  measurementId: "G-NT9QS41QQ8"
+    apiKey: "AIzaSyCNzmsRZ-lv37gMX6H7ttLvYkCBZ8taYM8",
+    authDomain: "mycloud-9a4ca.firebaseapp.com",
+    projectId: "mycloud-9a4ca",
+    storageBucket: "mycloud-9a4ca.firebasestorage.app",
+    messagingSenderId: "118303927329",
+    appId: "1:118303927329:web:b4f4a47af11dcd0b4d0760",
+    measurementId: "G-NT9QS41QQ8"
 };
 
 const app = initializeApp(firebaseConfig);
