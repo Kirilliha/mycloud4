@@ -18,6 +18,7 @@
                     <span id="myName" class="my-name">Подключение...</span>
                 </div>
                 
+                <button id="themeToggleBtn" class="btn-icon" title="Сменить тему">🌙</button>
                 <button id="googleLoginBtn" class="btn-icon" title="Привязать Google" style="display: none; color: #db4437; font-size: 20px;">G</button>
                 <button id="logoutBtn" class="btn-icon" title="Выйти" style="display: none;">🚪</button>
             </div>
@@ -26,8 +27,7 @@
                 <input type="text" placeholder="Поиск контактов..." disabled>
             </div>
 
-            <div id="contactsList" class="contacts-list">
-                </div>
+            <div id="contactsList" class="contacts-list"></div>
         </aside>
 
         <main class="chat-area">
@@ -49,7 +49,8 @@
             </div>
 
             <div class="message-input-area" id="messageInputArea" style="opacity: 0.5; pointer-events: none;">
-                <button class="btn-icon attach-btn">📎</button>
+                <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                <button class="btn-icon attach-btn" id="attachBtn" title="Прикрепить фото">📎</button>
                 <input type="text" id="messageInput" placeholder="Написать сообщение...">
                 <button id="sendBtn" class="btn-icon send-btn">➤</button>
             </div>
