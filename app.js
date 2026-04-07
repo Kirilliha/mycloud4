@@ -4,7 +4,7 @@ import {
     serverTimestamp, doc, setDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 import { 
-    getAuth, signInWithRedirect, GoogleAuthProvider, signOut, onAuthStateChanged, signInAnonymously 
+    getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInAnonymously 
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 
 // ==========================================
@@ -26,12 +26,8 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
 // DOM элементы
-const authScreen = document.getElementById('authScreen');
-const appScreen = document.getElementById('appScreen');
-const loginBtn = document.getElementById('loginBtn');
-const guestBtn = document.getElementById('guestBtn');
+const googleLoginBtn = document.getElementById('googleLoginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
-
 const contactsList = document.getElementById('contactsList');
 const messagesArea = document.getElementById('messagesArea');
 const messageInput = document.getElementById('messageInput');
@@ -42,50 +38,62 @@ let currentChatUid = null;
 let unsubscribeChat = null;
 
 // ==============================
-// 1. АВТОРИЗАЦИЯ
+// 1. АВТОМАТИЧЕСКАЯ АВТОРИЗАЦИЯ
 // ==============================
-// Вход через Google (через Redirect, чтобы не блокировалось браузером)
-loginBtn.onclick = () => signInWithRedirect(auth, provider);
 
-// Гостевой вход (Анонимно)
-guestBtn.onclick = async () => {
+// Кнопка привязки Google (теперь используем Popup)
+googleLoginBtn.onclick = async () => {
     try {
-        await signInAnonymously(auth);
+        await signInWithPopup(auth, provider);
     } catch (error) {
-        alert("Ошибка! Убедитесь, что включили метод входа 'Anonymous' в консоли Firebase.");
-        console.error(error);
+        console.error("Ошибка входа Google:", error);
+        alert("Ошибка входа. Если открыли файл напрямую, попробуйте запустить через Live Server.");
     }
 };
 
-// Выход
 logoutBtn.onclick = () => signOut(auth);
 
-// Отслеживание статуса
+// Отслеживание состояния
 onAuthStateChanged(auth, async (user) => {
     if (user) {
-        authScreen.style.display = 'none';
-        appScreen.style.display = 'flex';
-        
-        // Генерируем имя и красивую аватарку-робота для гостей
-        const displayName = user.isAnonymous ? `Гость_${user.uid.substring(0, 4)}` : (user.displayName || "Без имени");
+        // Если юзер вошел (гостем или через гугл)
+        const isGuest = user.isAnonymous;
+        const displayName = isGuest ? `Гость_${user.uid.substring(0, 4)}` : user.displayName;
         const photoURL = user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`;
 
         document.getElementById('myAvatar').src = photoURL;
         document.getElementById('myName').innerText = displayName;
 
-        // Сохраняем/обновляем пользователя в базе данных
+        // Показываем нужные кнопки
+        if (isGuest) {
+            googleLoginBtn.style.display = 'block'; // Гостям предлагаем Google
+            logoutBtn.style.display = 'none';
+        } else {
+            googleLoginBtn.style.display = 'none';
+            logoutBtn.style.display = 'block'; // Полноценным юзерам даем кнопку выхода
+        }
+
+        // Сохраняем в базу
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             name: displayName,
             photo: photoURL,
             email: user.email || "Гость",
-            isAnonymous: user.isAnonymous
+            isAnonymous: isGuest
         }, { merge: true });
 
         loadContacts();
     } else {
-        authScreen.style.display = 'flex';
-        appScreen.style.display = 'none';
+        // ЕСЛИ ЮЗЕРА НЕТ - АВТОМАТИЧЕСКИ ДЕЛАЕМ ЕГО ГОСТЕМ
+        try {
+            await signInAnonymously(auth);
+        } catch (error) {
+            console.error("Ошибка гостевого входа:", error);
+            if(error.code === 'auth/operation-not-allowed') {
+                alert("КРИТИЧЕСКАЯ ОШИБКА: Зайдите в Firebase -> Authentication -> Sign-in method и включите Anonymous (Анонимно)!");
+            }
+        }
+        
         contactsList.innerHTML = '';
         currentChatUid = null;
         if(unsubscribeChat) unsubscribeChat();
@@ -101,7 +109,6 @@ function loadContacts() {
         contactsList.innerHTML = '';
         snapshot.forEach((doc) => {
             const userData = doc.data();
-            // Показываем всех, кроме самого себя
             if (auth.currentUser && userData.uid !== auth.currentUser.uid) {
                 renderContact(userData);
             }
@@ -114,11 +121,10 @@ function renderContact(user) {
     div.className = 'contact-item';
     div.innerHTML = `
         <img src="${user.photo}" class="avatar">
-        <div class="contact-name">${user.name}</div>
+        <div class="contact-name">${user.name} ${user.isAnonymous ? '(Гость)' : ''}</div>
     `;
     
     div.onclick = () => {
-        // Подсветка активного контакта
         document.querySelectorAll('.contact-item').forEach(el => el.classList.remove('active'));
         div.classList.add('active');
         openChat(user);
@@ -129,7 +135,6 @@ function renderContact(user) {
 // ==============================
 // 3. ЛОГИКА ЧАТА
 // ==============================
-// Функция для создания уникального ID комнаты на двоих
 function getChatId(uid1, uid2) {
     return [uid1, uid2].sort().join("_");
 }
@@ -137,22 +142,18 @@ function getChatId(uid1, uid2) {
 function openChat(user) {
     currentChatUid = user.uid;
     
-    // Меняем шапку
     document.getElementById('noChatSelected').style.display = 'none';
     document.getElementById('activeChatInfo').style.display = 'flex';
     document.getElementById('activeChatAvatar').src = user.photo;
     document.getElementById('activeChatName').innerText = user.name;
     
-    // Разблокируем поле ввода
     messageInputArea.style.opacity = '1';
     messageInputArea.style.pointerEvents = 'all';
 
     const chatId = getChatId(auth.currentUser.uid, currentChatUid);
 
-    // Отключаем прослушку старого чата
     if (unsubscribeChat) unsubscribeChat();
 
-    // Слушаем сообщения нового чата
     const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"));
     
     unsubscribeChat = onSnapshot(q, (snapshot) => {
@@ -167,12 +168,10 @@ function openChat(user) {
             const msg = doc.data();
             const isMe = msg.senderId === auth.currentUser.uid;
             
-            // Защита от ошибок времени при отправке
             const timeText = msg.timestamp 
                 ? msg.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) 
                 : '...';
 
-            // Экранирование HTML от взлома (XSS)
             const safeText = msg.text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
             messagesArea.innerHTML += `
@@ -185,7 +184,6 @@ function openChat(user) {
             `;
         });
         
-        // Автоматическая прокрутка вниз
         messagesArea.scrollTop = messagesArea.scrollHeight;
     });
 }
@@ -197,8 +195,7 @@ async function sendMessage() {
     const text = messageInput.value.trim();
     if (!text || !currentChatUid) return;
 
-    messageInput.value = ''; // Сразу очищаем инпут
-    
+    messageInput.value = '';
     const chatId = getChatId(auth.currentUser.uid, currentChatUid);
 
     try {
@@ -208,12 +205,11 @@ async function sendMessage() {
             timestamp: serverTimestamp()
         });
     } catch (e) {
-        alert("Ошибка отправки! Проверьте правила базы данных (Rules).");
+        alert("Ошибка отправки! Проверьте правила базы данных.");
         console.error(e);
     }
 }
 
-// Привязка кнопок отправки
 sendBtn.onclick = sendMessage;
 messageInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter") sendMessage();
