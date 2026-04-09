@@ -1,167 +1,346 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud Messenger</title>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud Messenger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="theme-dark">
 
-    <!-- ========== OVERLAYS & MODALS ========== -->
+<!-- ══════════════════ OVERLAYS ══════════════════ -->
 
-    <!-- Image Lightbox -->
-    <div id="imageLightbox" class="lightbox" style="display:none">
-        <button class="lightbox-close" id="closeLightbox">✕</button>
-        <img id="lightboxImg" src="" alt="">
+<!-- Lightbox -->
+<div id="lightbox" class="lightbox">
+  <div class="lightbox-toolbar">
+    <button id="lbDownload" class="lb-btn">⬇ Скачать</button>
+    <button id="lbClose" class="lb-btn lb-close">✕</button>
+  </div>
+  <img id="lbImg" src="" alt="">
+</div>
+
+<!-- Context Menu -->
+<div id="ctxMenu" class="ctx-menu">
+  <div class="ctx-row" data-action="reply">    <span class="ctx-icon">↩</span> Ответить</div>
+  <div class="ctx-row" data-action="react">    <span class="ctx-icon">😊</span> Реакция</div>
+  <div class="ctx-row" data-action="copy">     <span class="ctx-icon">📋</span> Копировать</div>
+  <div class="ctx-row" data-action="forward">  <span class="ctx-icon">↪</span> Переслать</div>
+  <div class="ctx-row" data-action="pin">      <span class="ctx-icon">📌</span> Закрепить</div>
+  <div class="ctx-row" data-action="bookmark"> <span class="ctx-icon">🔖</span> Сохранить</div>
+  <div class="ctx-row ctx-own" data-action="edit">   <span class="ctx-icon">✏️</span> Редактировать</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-row ctx-own ctx-danger" data-action="delete"><span class="ctx-icon">🗑</span> Удалить</div>
+</div>
+
+<!-- Inline Reaction Picker -->
+<div id="reactionPicker" class="reaction-picker-popup">
+  <button data-e="❤️">❤️</button><button data-e="😂">😂</button>
+  <button data-e="👍">👍</button><button data-e="🔥">🔥</button>
+  <button data-e="😮">😮</button><button data-e="😢">😢</button>
+  <button data-e="👎">👎</button><button data-e="🎉">🎉</button>
+  <button data-e="💯">💯</button><button data-e="🤯">🤯</button>
+</div>
+
+<!-- Toast -->
+<div id="toastWrap" class="toast-wrap"></div>
+
+<!-- ══════════════════ MODALS ══════════════════ -->
+
+<!-- Add Contact -->
+<div id="modalAddContact" class="modal-bg">
+  <div class="modal-card">
+    <div class="modal-head"><span>Добавить контакт</span><button class="modal-x" data-close="modalAddContact">✕</button></div>
+    <p class="modal-hint">Введите Cloud ID собеседника в формате <b>#XXXXXX</b></p>
+    <div class="modal-input-row">
+      <input id="addContactInput" type="text" placeholder="#000000" maxlength="7">
+      <button id="addContactBtn" class="btn-primary">Найти</button>
+    </div>
+    <div id="addContactResult" class="add-result"></div>
+  </div>
+</div>
+
+<!-- Profile View (other user) -->
+<div id="modalProfile" class="modal-bg">
+  <div class="modal-card profile-card">
+    <button class="modal-x" data-close="modalProfile">✕</button>
+    <div class="profile-hero">
+      <img id="profAvatar" src="" alt="" class="profile-avatar">
+      <div id="profOnlineDot" class="profile-online-dot"></div>
+    </div>
+    <div class="profile-body">
+      <h2 id="profName"></h2>
+      <span id="profStatus" class="prof-status"></span>
+      <div class="prof-id-row"><span id="profId" class="prof-id"></span><button id="copyProfId" class="btn-ghost btn-sm">Копировать ID</button></div>
+      <p id="profBio" class="prof-bio"></p>
+      <div class="prof-actions">
+        <button id="profWriteBtn" class="btn-primary">✉ Написать</button>
+        <button id="profBlockBtn" class="btn-ghost btn-danger-ghost">⛔ Заблокировать</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- My Profile Edit -->
+<div id="modalMyProfile" class="modal-bg">
+  <div class="modal-card">
+    <div class="modal-head"><span>Мой профиль</span><button class="modal-x" data-close="modalMyProfile">✕</button></div>
+    <div class="my-profile-preview">
+      <img id="myProfAvatar" src="" class="profile-avatar" style="width:72px;height:72px">
+      <div>
+        <div id="myProfName" style="font-weight:700;font-size:17px"></div>
+        <div id="myProfId" class="prof-id"></div>
+      </div>
+    </div>
+    <label class="form-label">Статус (emoji + текст)</label>
+    <input id="statusEmojiInput" type="text" maxlength="2" placeholder="😎" class="form-input" style="width:56px;display:inline-block;text-align:center;margin-right:8px">
+    <input id="statusTextInput" type="text" maxlength="60" placeholder="На связи!" class="form-input" style="width:calc(100% - 72px);display:inline-block">
+    <label class="form-label" style="margin-top:12px">О себе</label>
+    <textarea id="bioInput" class="form-input" rows="3" maxlength="120" placeholder="Пара слов о себе..."></textarea>
+    <button id="saveProfileBtn" class="btn-primary" style="margin-top:14px;width:100%">Сохранить</button>
+  </div>
+</div>
+
+<!-- Settings -->
+<div id="modalSettings" class="modal-bg">
+  <div class="modal-card settings-card">
+    <div class="modal-head"><span>Настройки</span><button class="modal-x" data-close="modalSettings">✕</button></div>
+
+    <div class="settings-section">
+      <div class="settings-label">Тема</div>
+      <div class="theme-grid">
+        <button class="theme-chip" data-theme="theme-dark">🌑 Тёмная</button>
+        <button class="theme-chip" data-theme="theme-midnight">⚫ Midnight</button>
+        <button class="theme-chip" data-theme="theme-light">☀️ Светлая</button>
+        <button class="theme-chip" data-theme="theme-forest">🌿 Forest</button>
+      </div>
     </div>
 
-    <!-- Context Menu -->
-    <div id="contextMenu" class="context-menu">
-        <div class="ctx-item" id="ctxReply">↩ Ответить</div>
-        <div class="ctx-item" id="ctxCopy">📋 Копировать</div>
-        <div class="ctx-item" id="ctxForward">↪ Переслать</div>
-        <div class="ctx-item" id="ctxPin">📌 Закрепить</div>
-        <div class="ctx-item ctx-edit" id="ctxEdit">✏️ Редактировать</div>
-        <div class="ctx-divider"></div>
-        <div class="ctx-item ctx-danger" id="ctxDelete">🗑️ Удалить</div>
+    <div class="settings-section">
+      <div class="settings-label">Размер шрифта</div>
+      <div class="font-size-row">
+        <span class="font-preview-sm">Aa</span>
+        <input type="range" id="fontSizeSlider" min="13" max="18" step="1" value="15" class="slider">
+        <span class="font-preview-lg">Aa</span>
+        <span id="fontSizeVal" class="font-size-badge">15px</span>
+      </div>
     </div>
 
-    <!-- Forward Modal -->
-    <div id="forwardModal" class="modal-overlay" style="display:none">
-        <div class="modal-box">
-            <div class="modal-header">
-                <span>Переслать сообщение</span>
-                <button id="closeForwardModal" class="btn-icon">✕</button>
-            </div>
-            <div id="forwardContactsList" class="forward-contacts"></div>
+    <div class="settings-section">
+      <div class="settings-label">Уведомления</div>
+      <label class="toggle-row">
+        <span>Звук сообщений</span>
+        <input type="checkbox" id="toggleSound" checked class="toggle-cb">
+        <div class="toggle-track"></div>
+      </label>
+      <label class="toggle-row">
+        <span>Push-уведомления</span>
+        <input type="checkbox" id="togglePush" class="toggle-cb">
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-label">Сообщения</div>
+      <label class="toggle-row">
+        <span>Enter — отправить (Shift+Enter — новая строка)</span>
+        <input type="checkbox" id="toggleEnterSend" checked class="toggle-cb">
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- Forward Modal -->
+<div id="modalForward" class="modal-bg">
+  <div class="modal-card">
+    <div class="modal-head"><span>Переслать</span><button class="modal-x" data-close="modalForward">✕</button></div>
+    <div id="forwardList" class="forward-list"></div>
+  </div>
+</div>
+
+<!-- Saved Messages -->
+<div id="modalSaved" class="modal-bg">
+  <div class="modal-card saved-card">
+    <div class="modal-head"><span>🔖 Сохранённые</span><button class="modal-x" data-close="modalSaved">✕</button></div>
+    <div id="savedList" class="saved-list"></div>
+  </div>
+</div>
+
+<!-- Poll Creator -->
+<div id="modalPoll" class="modal-bg">
+  <div class="modal-card">
+    <div class="modal-head"><span>📊 Создать опрос</span><button class="modal-x" data-close="modalPoll">✕</button></div>
+    <label class="form-label">Вопрос</label>
+    <input id="pollQuestion" class="form-input" type="text" maxlength="100" placeholder="Ваш вопрос...">
+    <label class="form-label" style="margin-top:10px">Варианты ответа</label>
+    <div id="pollOptions">
+      <input class="form-input poll-opt" type="text" placeholder="Вариант 1" maxlength="60">
+      <input class="form-input poll-opt" type="text" placeholder="Вариант 2" maxlength="60">
+    </div>
+    <button id="addPollOption" class="btn-ghost btn-sm" style="margin-top:8px">+ Добавить вариант</button>
+    <button id="sendPollBtn" class="btn-primary" style="margin-top:14px;width:100%">Отправить опрос</button>
+  </div>
+</div>
+
+<!-- Sticker Panel -->
+<div id="stickerPanel" class="sticker-panel">
+  <div class="sticker-tabs">
+    <button class="stk-tab active" data-pack="faces">😄 Лица</button>
+    <button class="stk-tab" data-pack="animals">🐾 Животные</button>
+    <button class="stk-tab" data-pack="objects">💡 Прочее</button>
+  </div>
+  <div id="stickerGrid" class="sticker-grid"></div>
+</div>
+
+<!-- Emoji Picker -->
+<div id="emojiPicker" class="emoji-picker-panel"></div>
+
+<!-- Media Gallery -->
+<div id="modalGallery" class="modal-bg">
+  <div class="modal-card gallery-card">
+    <div class="modal-head"><span>🖼 Медиа галерея</span><button class="modal-x" data-close="modalGallery">✕</button></div>
+    <div id="galleryGrid" class="gallery-grid"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ APP ══════════════════ -->
+<div class="app">
+
+  <!-- NAV RAIL -->
+  <nav class="nav-rail">
+    <div class="nav-logo">☁</div>
+    <div class="nav-section">
+      <button class="nav-btn active" id="navChats" title="Чаты">💬</button>
+      <button class="nav-btn" id="navSaved" title="Сохранённые">🔖</button>
+      <button class="nav-btn" id="navGallery" title="Галерея">🖼</button>
+    </div>
+    <div class="nav-spacer"></div>
+    <div class="nav-section nav-bottom">
+      <button class="nav-btn" id="navSettings" title="Настройки">⚙️</button>
+      <button class="nav-btn" id="navMyProfile" title="Профиль">
+        <img id="navAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=x" class="nav-avatar" alt="">
+      </button>
+    </div>
+  </nav>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-title">Сообщения</div>
+      <button id="addContactTrigger" class="btn-icon-sm" title="Добавить контакт">＋</button>
+    </div>
+
+    <div class="search-wrap">
+      <span class="search-ico">🔍</span>
+      <input id="contactSearch" type="text" placeholder="Поиск...">
+    </div>
+
+    <div id="contactsList" class="contacts-list">
+      <div class="empty-contacts">
+        <div style="font-size:40px;margin-bottom:10px">👤</div>
+        <b>Нет контактов</b>
+        <span>Нажмите <b>＋</b> чтобы добавить собеседника по его Cloud ID</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CHAT -->
+  <main class="chat-main">
+
+    <!-- No chat -->
+    <div id="noChatScreen" class="no-chat-screen">
+      <div class="no-chat-inner">
+        <div class="no-chat-logo">☁</div>
+        <h1>Cloud Messenger</h1>
+        <p>Выберите чат или добавьте нового собеседника</p>
+        <button id="noScreenAddBtn" class="btn-primary">Добавить контакт</button>
+      </div>
+    </div>
+
+    <!-- Active chat wrapper -->
+    <div id="chatWrapper" class="chat-wrapper" style="display:none">
+
+      <!-- Header -->
+      <header class="chat-head">
+        <div class="chat-head-user" id="chatHeadUser">
+          <div class="avatar-wrap">
+            <img id="chatAvatar" src="" class="chat-avatar" alt="">
+            <span id="chatOnlineDot" class="presence-dot" style="display:none"></span>
+          </div>
+          <div class="chat-head-info">
+            <span id="chatName" class="chat-uname"></span>
+            <span id="chatStatus" class="chat-ustatus online">В сети</span>
+          </div>
         </div>
+        <div class="chat-head-actions">
+          <button id="btnChatSearch" class="btn-icon-sm" title="Поиск">🔍</button>
+          <button id="btnGalleryOpen" class="btn-icon-sm" title="Медиа">🖼</button>
+          <button id="btnMuteChat" class="btn-icon-sm" title="Мут">🔔</button>
+          <button id="btnClearChat" class="btn-icon-sm btn-danger-ghost" title="Очистить">🗑</button>
+        </div>
+      </header>
+
+      <!-- Chat search bar -->
+      <div id="chatSearchBar" class="chat-search-bar" style="display:none">
+        <input id="chatSearchInput" type="text" placeholder="Поиск в чате...">
+        <span id="chatSearchInfo" class="search-info"></span>
+        <button id="csUp" class="btn-icon-sm">↑</button>
+        <button id="csDown" class="btn-icon-sm">↓</button>
+        <button id="csClose" class="btn-icon-sm">✕</button>
+      </div>
+
+      <!-- Pinned -->
+      <div id="pinnedBar" class="pinned-bar" style="display:none">
+        <span class="pin-ico">📌</span>
+        <div class="pin-body">
+          <span class="pin-lbl">Закреплено</span>
+          <span id="pinnedText" class="pin-txt"></span>
+        </div>
+        <button id="unpinBtn" class="btn-icon-sm" style="opacity:.4;font-size:11px">✕</button>
+      </div>
+
+      <!-- Messages -->
+      <div id="messagesArea" class="messages-area"></div>
+
+      <!-- Scroll button -->
+      <button id="scrollBtn" class="scroll-fab" style="display:none">
+        ↓ <span id="scrollBadge" class="scroll-badge" style="display:none">0</span>
+      </button>
+
+      <!-- Reply preview -->
+      <div id="replyBar" class="reply-bar" style="display:none">
+        <div class="reply-accent"></div>
+        <div class="reply-body">
+          <span id="replyFrom" class="reply-from"></span>
+          <span id="replySnippet" class="reply-snippet"></span>
+        </div>
+        <button id="cancelReply" class="btn-icon-sm" style="opacity:.5">✕</button>
+      </div>
+
+      <!-- Input -->
+      <div id="inputArea" class="input-area">
+        <input type="file" id="fileInput" accept="image/*,.pdf,.doc,.docx,.txt,.zip,.rar" style="display:none">
+        <div class="input-tools">
+          <button id="attachBtn" class="tool-btn" title="Файл">📎</button>
+          <button id="emojiBtn" class="tool-btn" title="Эмодзи">😊</button>
+          <button id="stickerBtn" class="tool-btn" title="Стикеры">🎭</button>
+          <button id="pollBtn" class="tool-btn" title="Опрос">📊</button>
+        </div>
+        <div class="input-box-wrap">
+          <textarea id="msgInput" class="msg-input" placeholder="Сообщение..." rows="1"></textarea>
+        </div>
+        <button id="voiceBtn" class="tool-btn voice-btn" title="Голосовое">🎤</button>
+        <button id="sendBtn" class="send-btn" style="display:none" title="Отправить">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M2 21L23 12 2 3v7l15 2-15 2z"/></svg>
+        </button>
+      </div>
+
     </div>
+  </main>
+</div>
 
-    <!-- Emoji Picker -->
-    <div id="emojiPicker" class="emoji-picker" style="display:none"></div>
-
-    <!-- Toast Container -->
-    <div id="toastContainer" class="toast-container"></div>
-
-    <!-- ========== APP ========== -->
-    <div id="appScreen" class="app-container">
-
-        <!-- ===== SIDEBAR ===== -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="my-profile">
-                    <div class="avatar-wrap">
-                        <img id="myAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=default" class="avatar" alt="">
-                        <span class="online-dot my-dot"></span>
-                    </div>
-                    <div class="my-info">
-                        <span id="myName" class="my-name">Подключение...</span>
-                        <span class="my-status">В сети</span>
-                    </div>
-                </div>
-                <div class="header-btns">
-                    <button id="themeToggleBtn" class="btn-icon" title="Тема">🌙</button>
-                    <button id="googleLoginBtn" class="btn-icon google-btn" title="Войти через Google" style="display:none">G</button>
-                    <button id="logoutBtn" class="btn-icon" title="Выйти" style="display:none">🚪</button>
-                </div>
-            </div>
-
-            <div class="sidebar-search">
-                <span class="search-icon-lbl">🔍</span>
-                <input type="text" id="contactSearch" placeholder="Поиск...">
-                <button id="clearSearch" class="btn-icon" style="display:none;font-size:12px;opacity:.5">✕</button>
-            </div>
-
-            <div id="contactsList" class="contacts-list"></div>
-        </aside>
-
-        <!-- ===== CHAT AREA ===== -->
-        <main class="chat-area">
-
-            <!-- Chat Header -->
-            <header class="chat-header">
-                <div id="noChatSelected" class="no-chat-msg">
-                    <div class="no-chat-icon">💬</div>
-                    <p>Выберите чат слева</p>
-                </div>
-                <div id="activeChatInfo" class="active-chat-info" style="display:none">
-                    <div class="chat-user">
-                        <div class="avatar-wrap">
-                            <img id="activeChatAvatar" src="" class="avatar" alt="">
-                            <span id="activeChatDot" class="online-dot" style="display:none"></span>
-                        </div>
-                        <div class="chat-user-details">
-                            <span id="activeChatName" class="chat-name"></span>
-                            <span id="activeChatStatus" class="chat-status online">В сети</span>
-                        </div>
-                    </div>
-                    <div class="chat-header-actions">
-                        <button id="searchInChatBtn" class="btn-icon" title="Поиск в чате">🔍</button>
-                        <button id="deleteChatBtn" class="btn-icon btn-danger" title="Очистить чат">🗑️</button>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Search in chat bar -->
-            <div id="chatSearchBar" class="chat-search-bar" style="display:none">
-                <span class="search-icon-lbl" style="font-size:14px">🔍</span>
-                <input type="text" id="chatSearchInput" placeholder="Поиск в переписке...">
-                <span id="chatSearchCount" class="search-count"></span>
-                <button id="chatSearchPrev" class="btn-icon nav-btn">⬆</button>
-                <button id="chatSearchNext" class="btn-icon nav-btn">⬇</button>
-                <button id="closeChatSearch" class="btn-icon" style="font-size:12px">✕</button>
-            </div>
-
-            <!-- Pinned Message -->
-            <div id="pinnedBar" class="pinned-bar" style="display:none">
-                <div class="pin-left">📌</div>
-                <div class="pin-content">
-                    <span class="pin-label">Закреплённое сообщение</span>
-                    <span id="pinnedText" class="pin-text"></span>
-                </div>
-                <button id="unpinBtn" class="btn-icon" style="font-size:13px;opacity:.5">✕</button>
-            </div>
-
-            <!-- Messages -->
-            <div id="messagesArea" class="messages-area">
-                <div class="start-placeholder">
-                    <div class="start-icon">☁️</div>
-                    <p>Cloud Messenger</p>
-                    <span>Выберите собеседника слева</span>
-                </div>
-            </div>
-
-            <!-- Scroll to bottom -->
-            <button id="scrollBottomBtn" class="scroll-btn" style="display:none">
-                ↓
-                <span id="newMsgBadge" class="new-msg-badge" style="display:none">0</span>
-            </button>
-
-            <!-- Reply Preview -->
-            <div id="replyPreview" class="reply-preview" style="display:none">
-                <div class="reply-accent-bar"></div>
-                <div class="reply-preview-content">
-                    <span id="replyAuthorName" class="reply-author"></span>
-                    <span id="replyTextPreview" class="reply-text"></span>
-                </div>
-                <button id="closeReplyBtn" class="btn-icon" style="font-size:13px;opacity:.5">✕</button>
-            </div>
-
-            <!-- Input Area -->
-            <div class="message-input-area" id="messageInputArea" style="opacity:.5;pointer-events:none">
-                <input type="file" id="fileInput" accept="image/*,.pdf,.doc,.docx,.txt,.zip,.rar,.mp4,.mov" style="display:none">
-                <button class="btn-icon attach-btn" id="attachBtn" title="Прикрепить">📎</button>
-                <button class="btn-icon emoji-trigger-btn" id="emojiTriggerBtn" title="Эмодзи">😊</button>
-                <input type="text" id="messageInput" placeholder="Написать сообщение..." autocomplete="off">
-                <button class="btn-icon voice-btn" id="voiceBtn" title="Голосовое">🎤</button>
-                <button id="sendBtn" class="btn-icon send-btn" style="display:none" title="Отправить">➤</button>
-            </div>
-
-        </main>
-    </div>
-
-    <script type="module" src="app.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>
